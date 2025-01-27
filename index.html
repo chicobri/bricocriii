@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Celestial Grimoire</title>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'MedievalSharp', cursive;
+            background: linear-gradient(160deg, #0a0a0a 0%, #1a0a1a 100%);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            border: 12px solid #3a0000;
+            border-image: linear-gradient(45deg, #3a0000 0%, #1a0000 100%) 1;
+        }
+
+        #container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(255,0,0,0.1);
+        }
+
+        h1 {
+            font-family: 'UnifrakturMaguntia', cursive;
+            color: #cc3333;
+            text-align: center;
+            font-size: 3.5em;
+            text-shadow: 0 0 15px rgba(204,51,51,0.7);
+            margin: 20px 0;
+            letter-spacing: 3px;
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        #controls {
+            background: rgba(26, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            border: 2px solid #660000;
+            box-shadow: 0 0 20px rgba(102,0,0,0.3);
+        }
+
+        input[type="datetime-local"] {
+            background: #2d0d0d;
+            color: #cc6666;
+            border: 1px solid #660000;
+            padding: 12px;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-size: 1.1em;
+            font-family: 'MedievalSharp', cursive;
+        }
+
+        button {
+            background: linear-gradient(45deg, #660000 0%, #330000 100%);
+            color: #ffcccc;
+            border: 2px solid #990000;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #990000 0%, #660000 100%);
+            text-shadow: 0 0 10px rgba(255,204,204,0.7);
+            box-shadow: 0 0 25px rgba(153,0,0,0.5);
+            transform: scale(1.05);
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 20%, rgba(255,255,255,0.1) 50%, transparent 80%);
+            transform: rotate(45deg);
+            animation: buttonGlow 3s infinite linear;
+        }
+
+        #chart-container {
+            background: #1a0000;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 3px solid #660000;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            background: #0d0000;
+            border-radius: 5px;
+            border: 1px solid #330000;
+        }
+
+        #results {
+            background: rgba(26, 0, 0, 0.8);
+            border-radius: 5px;
+            padding: 20px;
+            border: 2px solid #660000;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(13, 0, 0, 0.5);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #330000;
+        }
+
+        th {
+            background: linear-gradient(45deg, #660000 0%, #330000 100%);
+            color: #ffcccc;
+            font-size: 1.1em;
+            text-shadow: 0 0 5px rgba(255,204,204,0.5);
+        }
+
+        tr:hover {
+            background-color: rgba(102,0,0,0.1);
+        }
+
+        td {
+            color: #cc9999;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 15px rgba(204,51,51,0.7); }
+            to { text-shadow: 0 0 25px rgba(204,51,51,0.9), 0 0 10px rgba(204,51,51,0.5); }
+        }
+
+        @keyframes buttonGlow {
+            0% { transform: rotate(45deg) translateX(-100%); }
+            100% { transform: rotate(45deg) translateX(100%); }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Celestial Grimoire</h1>
+        
+        <div id="controls">
+            <input type="datetime-local" id="datetime" value="2023-01-11T07:51">
+            <button onclick="calculatePositions()">Invoke Calculation</button>
+        </div>
+
+        <div id="chart-container">
+            <canvas id="chart" width="1000" height="600"></canvas>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const AU = 149597870.7;
+        const DEG_TO_RAD = Math.PI/180;
+        const RAD_TO_DEG = 180/Math.PI;
+        const ZODIAC_SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+                            "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+        const zodiacSymbols = ['♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','♈','♉'];
+
+        const PLANETS = {
+            Mercury: { a: 0.38709893, e: 0.20563069, i: 7.00487, Ω: 48.33167, ω: 77.45645, L0: 252.25084, n: 4.092334 },
+            Venus: { a: 0.72333199, e: 0.00677323, i: 3.39471, Ω: 76.68069, ω: 131.53298, L0: 181.97973, n: 1.602136 },
+            Earth: { a: 1.00000011, e: 0.01671022, i: 0.00005, Ω: -11.26064, ω: 102.94719, L0: 100.46435, n: 0.985609 },
+            Mars: { a: 1.52367934, e: 0.09340062, i: 1.84969, Ω: 49.5581, ω: 286.502, L0: 355.453, n: 0.524061 },
+            Jupiter: { a: 5.20336301, e: 0.04839266, i: 1.30530, Ω: 100.556, ω: 275.066, L0: 34.404, n: 0.083081 },
+            Saturn: { a: 9.53707032, e: 0.05415060, i: 2.48446, Ω: 113.715, ω: 338.307, L0: 50.075, n: 0.033468 },
+            Uranus: { a: 19.19126393, e: 0.04716771, i: 0.76986, Ω: 74.229, ω: 96.734, L0: 314.055, n: 0.011769 },
+            Neptune: { a: 30.06896348, e: 0.00858587, i: 1.76917, Ω: 131.721, ω: 273.249, L0: 304.349, n: 0.005981 },
+            Moon: { a: 0.00257, e: 0.0549, i: 5.145, Ω: 125.08, ω: 318.15, L0: 218.316, n: 13.17635 },
+            Pluto: { a: 39.482116, e: 0.24882730, i: 17.1400126, Ω: 110.30347, ω: 113.76329, L0: 238.929038, n: 0.003964 },
+            Lilith: { a: 0.732939, e: 0.14430, i: 1.6702, Ω: 143.805, ω: 173.989, L0: 235.320, n: 0.21672 }
+        };
+
+        const planetColors = {
+            Mercury: '#9b59b6', Venus: '#2ecc71', Mars: '#e74c3c',
+            Jupiter: '#f1c40f', Saturn: '#e67e22', Uranus: '#3498db',
+            Neptune: '#2980b9', Moon: '#cccccc',
+            Pluto: '#2c3e50', Lilith: '#8e44ad'
+        };
+
+        function julianDate(date) {
+            return (date.getTime() / 86400000) + 2440587.5;
+        }
+
+        function solveKepler(M, e) {
+            let E = M;
+            for(let i = 0; i < 50; i++) {
+                const delta = E - e * Math.sin(E) - M;
+                E -= delta / (1 - e * Math.cos(E));
+                if(Math.abs(delta) < 1e-9) break;
+            }
+            return E;
+        }
+
+        function calculatePlanetPosition(planet, jd) {
+            const T = (jd - 2451545.0) / 36525;
+            const a = planet.a * AU;
+            const meanLongitude = ((planet.L0 + planet.n * T * 36525) % 360) * DEG_TO_RAD;
+            const M = (meanLongitude - planet.Ω * DEG_TO_RAD - planet.ω * DEG_TO_RAD + 2 * Math.PI) % (2 * Math.PI);
+            
+            const E = solveKepler(M, planet.e);
+            const ν = 2 * Math.atan2(
+                Math.sqrt(1 + planet.e) * Math.sin(E/2),
+                Math.sqrt(1 - planet.e) * Math.cos(E/2)
+            );
+            
+            const r = a * (1 - planet.e * Math.cos(E));
+            const xh = r * Math.cos(ν);
+            const yh = r * Math.sin(ν);
+            
+            const Ω = planet.Ω * DEG_TO_RAD;
+            const ω = planet.ω * DEG_TO_RAD;
+            const i = planet.i * DEG_TO_RAD;
+            
+            return {
+                x: xh * (Math.cos(ω)*Math.cos(Ω) - Math.sin(ω)*Math.sin(Ω)*Math.cos(i)) -
+                   yh * (Math.sin(ω)*Math.cos(Ω) + Math.cos(ω)*Math.sin(Ω)*Math.cos(i)),
+                y: xh * (Math.cos(ω)*Math.sin(Ω) + Math.sin(ω)*Math.cos(Ω)*Math.cos(i)) +
+                   yh * (Math.cos(ω)*Math.cos(Ω)*Math.cos(i) - Math.sin(ω)*Math.sin(Ω)),
+                z: (xh * Math.sin(ω) + yh * Math.cos(ω)) * Math.sin(i)
+            };
+        }
+
+        function calculatePositions() {
+            try {
+                const date = new Date(document.getElementById('datetime').value);
+                const jd = julianDate(date);
+                const T = (jd - 2451545.0) / 36525;
+                
+                const Δψ = (5038.481507 * T 
+                          - 1.0790069 * T**2 
+                          - 0.00114045 * T**3 
+                          + 0.000132851 * T**4 
+                          - 0.0000000951 * T**5) / 3600;
+
+                const earth = calculatePlanetPosition(PLANETS.Earth, jd);
+                
+                const positions = {};
+                Object.entries(PLANETS).forEach(([name, planet]) => {
+                    if(name === 'Earth') return;
+                    
+                    let helio;
+                    if(name === 'Moon') {
+                        const moonGeo = calculatePlanetPosition(planet, jd);
+                        helio = {
+                            x: earth.x + moonGeo.x,
+                            y: earth.y + moonGeo.y,
+                            z: earth.z + moonGeo.z
+                        };
+                    } else {
+                        helio = calculatePlanetPosition(planet, jd);
+                    }
+                    
+                    const geo = {
+                        x: helio.x - earth.x,
+                        y: helio.y - earth.y,
+                        z: helio.z - earth.z
+                    };
+                    
+                    let λ = (Math.atan2(geo.y, geo.x) * RAD_TO_DEG + 360) % 360;
+                    const β = Math.atan2(geo.z, Math.sqrt(geo.x**2 + geo.y**2)) * RAD_TO_DEG;
+                    
+                    λ = (λ + Δψ) % 360;
+                    
+                    positions[name] = {
+                        longitude: λ,
+                        latitude: β,
+                        distance: (Math.sqrt(geo.x**2 + geo.y**2 + geo.z**2) / AU).toFixed(3)
+                    };
+                });
+
+                drawChart(positions);
+                displayResults(positions);
+            } catch (error) {
+                alert('Celestial alignment failed: ' + error.message);
+            }
+        }
+
+        function drawChart(positions) {
+            const canvas = document.getElementById('chart');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = '#660000';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(500, 300, 250, 0, Math.PI * 2);
+            ctx.stroke();
+
+            zodiacSymbols.forEach((symbol, i) => {
+                const angle = (i * 30 - 15) * Math.PI / 180;
+                ctx.save();
+                ctx.translate(500 + 280 * Math.cos(angle), 300 + 280 * Math.sin(angle));
+                ctx.rotate(angle + Math.PI/2);
+                ctx.font = '28px Arial Unicode MS';
+                ctx.fillStyle = '#cc3333';
+                ctx.shadowColor = '#cc3333';
+                ctx.shadowBlur = 15;
+                ctx.textAlign = 'center';
+                ctx.fillText(symbol, 0, 0);
+                ctx.restore();
+            });
+
+            Object.entries(positions).forEach(([name, pos]) => {
+                const angle = (pos.longitude - 90) * DEG_TO_RAD;
+                const x = 500 + 250 * Math.cos(angle);
+                const y = 300 + 250 * Math.sin(angle);
+                
+                ctx.beginPath();
+                ctx.arc(x, y, name === 'Moon' ? 6 : 8, 0, Math.PI * 2);
+                ctx.fillStyle = planetColors[name];
+                ctx.shadowColor = planetColors[name];
+                ctx.shadowBlur = 15;
+                ctx.fill();
+
+                ctx.fillStyle = '#ffcccc';
+                ctx.font = 'bold 14px MedievalSharp';
+                ctx.fillText(name, x, y + (name === 'Moon' ? 20 : 25));
+            });
+        }
+
+        function displayResults(positions) {
+            let html = `<table>
+                <tr>
+                    <th>Celestial Body</th>
+                    <th>Arcane Longitude</th>
+                    <th>Zodiac Alignment</th>
+                    <th>Ethereal Latitude</th>
+                    <th>Astral Distance</th>
+                </tr>`;
+            
+            Object.entries(positions).forEach(([name, pos]) => {
+                const zodiacIndex = Math.floor(pos.longitude / 30);
+                html += `
+                <tr>
+                    <td style="color: ${planetColors[name]}">${name}</td>
+                    <td>${pos.longitude.toFixed(2)}°</td>
+                    <td><span style="font-size:1.2em">${ZODIAC_SIGNS[zodiacIndex]}</span></td>
+                    <td>${pos.latitude.toFixed(2)}°</td>
+                    <td>${pos.distance} AU</td>
+                </tr>`;
+            });
+            
+            document.getElementById('results').innerHTML = html + '</table>';
+        }
+    </script>
+</body>
+</html>

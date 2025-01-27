@@ -340,9 +340,9 @@
             let html = `<table>
                 <tr>
                     <th>Celestial Body</th>
-                    <th>Arcane Longitude</th>
+                    
                     <th>Zodiac Alignment</th>
-                    <th>Ethereal Latitude</th>
+                    
                     <th>Astral Distance</th>
                 </tr>`;
             
@@ -351,9 +351,9 @@
                 html += `
                 <tr>
                     <td style="color: ${planetColors[name]}">${name}</td>
-                    <td>${pos.longitude.toFixed(2)}°</td>
+                    
                     <td><span style="font-size:1.2em">${ZODIAC_SIGNS[zodiacIndex]}</span></td>
-                    <td>${pos.latitude.toFixed(2)}°</td>
+                    
                     <td>${pos.distance} AU</td>
                 </tr>`;
             });

@@ -174,9 +174,25 @@
         <h1>Celestial Grimoire</h1>
         
         <div id="controls">
-            <input type="datetime-local" id="datetime" value="0000-00-00T00:00">
+            <input type="datetime-local" id="datetime">
             <button onclick="calculatePositions()">Invoke Calculation</button>
         </div>
+        <script>
+            // Set the input value on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                const dateInput = document.getElementById('datetime');
+                const now = new Date();
+                
+                // Format to 'YYYY-MM-DDTHH:mm' (local time)
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+                dateInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            });
+            </script>
 
         <div id="chart-container">
             <canvas id="chart" width="1000" height="600"></canvas>

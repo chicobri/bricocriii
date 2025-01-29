@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Apotheosis</title>
+    <title>Celestial Grimoire</title>
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
     <style>
         body {
@@ -177,6 +177,10 @@
             <input type="datetime-local" id="datetime">
             <button onclick="calculatePositions()">Invoke Calculation</button>
         </div>
+
+        <div id="chart-container">
+            <canvas id="chart" width="1000" height="600"></canvas>
+        </div>
         <script>
             // Set the input value on page load
             document.addEventListener('DOMContentLoaded', function() {
@@ -194,10 +198,6 @@
             });
             </script>
 
-        <div id="chart-container">
-            <canvas id="chart" width="1000" height="600"></canvas>
-        </div>
-
         <div id="results"></div>
         <div style="text-align: center; margin-top: 30px;">
             <a href="wordtest.html" style="font-family: 'LorenIpsum', 'Franklin Gothic Medium', 'Arial Narrow', Arial, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; 
@@ -207,6 +207,16 @@
                                           text-shadow: 0 0 15px rgba(204,51,51,0.5);
                                           transition: all 0.3s ease;">
                 CRI-MATRIA
+            </a>
+        </div>
+        <div style="text-align: left; margin-top: 30px;">
+            <a href="aztec test.html" style="font-family: 'LorenIpsum', 'Franklin Gothic Medium', 'Arial Narrow', Arial, Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; 
+                                          font-size: 1.11em;
+                                          color: #cc3333;
+                                          text-decoration: none;
+                                          text-shadow: 0 0 15px rgba(204,51,51,0.5);
+                                          transition: all 0.3s ease;">
+                AZTEC CALENDER
             </a>
         </div>
         

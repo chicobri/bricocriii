@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Aztec Sun Stone</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+
+        body {
+            background: #1a0000;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'MedievalSharp', cursive;
+            color: #c0a050;
+        }
+        
+        
+
+        .container {
+            position: relative;
+            width: 90vmin;
+            height: 90vmin;
+        }
+
+        .sun-stone {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 10px rgba(192, 160, 80, 0.5));
+        }
+
+        .calendar-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 1rem;
+            border-radius: 50%;
+            border: 2px solid #c0a050;
+        }
+
+        .day-marker {
+            cursor: pointer;
+            transition: filter 0.3s;
+        }
+
+        .day-marker:hover {
+            filter: brightness(1.2);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <svg class="sun-stone" viewBox="0 0 400 400">
+            <!-- Central Face -->
+            <circle cx="200" cy="200" r="40" fill="#c0a050" />
+            <path d="M180,220 Q200,240 220,220" fill="#1a0f00" />
+
+            <!-- Inner Sun Rays -->
+            <g id="sun-rays">
+                <path d="M200,160 L210,170 200,180 190,170 Z" fill="#ffd700" />
+                <!-- Repeat 7 more rays with rotated positions -->
+            </g>
+
+            <!-- Calendar Rings -->
+            <g id="calendar-rings">
+                <!-- 20 Day Signs -->
+                <g id="day-signs">
+                    <!-- Each day sign will be programmatically added -->
+                </g>
+
+                <!-- Xiuhpohualli Markers -->
+                <circle cx="200" cy="200" r="160" fill="none" stroke="#c0a050" stroke-width="2" />
+                <circle cx="200" cy="200" r="140" fill="none" stroke="#c0a050" stroke-width="1" />
+            </g>
+
+            <!-- Outer Serpent -->
+            <path d="M50,200 Q100,150 150,200 Q200,250 250,200 Q300,150 350,200" 
+                  fill="none" stroke="#228b22" stroke-width="4" />
+        </svg>
+
+        <div class="calendar-text">
+            <div id="tonalpohualli"></div>
+            <div id="xiuhpohualli"></div>
+            <div id="gregorian"></div>
+        </div>
+    </div>
+
+    <script>
+        const AZTEC_EPOCH = Date.UTC(-3113, 7, 11); // August 11, 3114 BCE
+        const DAY_SIGNS = [
+            "Cipactli", "Ehecatl", "Calli", "Cuetzpalin", "Coatl", 
+            "Miquiztli", "Mazatl", "Tochtli", "Atl", "Itzcuintli", 
+            "Ozomahtli", "Malinalli", "Acatl", "Ocelotl", "Cuauhtli", 
+            "Cozcacuauhtli", "Ollin", "Tecpatl", "Quiahuitl", "Xochitl"
+        ];
+        const DEITIES = {
+            "Cipactli": {
+                deity: "Tonacatecuhtli",
+                description: "Creator god of sustenance and fertility, representing primal energy."
+            },
+            "Ehecatl": {
+                deity: "Ehecatl-Quetzalcoatl",
+                description: "Wind god, bringer of life and organizer of the cosmos."
+            },
+            "Calli": {
+                deity: "Tepeyollotl",
+                description: "Jaguar god of earthquakes and echoes, heart of the mountain."
+            },
+            "Cuetzpalin": {
+                deity: "Huehuecoyotl",
+                description: "Trickster coyote god of storytelling and mischief."
+            },
+            "Coatl": {
+                deity: "Chalchiuhtlicue",
+                description: "Water goddess of rivers, lakes, and childbirth."
+            },
+            "Miquiztli": {
+                deity: "Tecciztecatl",
+                description: "Moon god associated with snails and fertility."
+            },
+            "Mazatl": {
+                deity: "Tlaloc",
+                description: "Rain and storm god, provider of agricultural abundance."
+            },
+            "Tochtli": {
+                deity: "Mayahuel",
+                description: "Goddess of maguey plant and pulque, symbol of nourishment."
+            },
+            "Atl": {
+                deity: "Xiuhtecuhtli",
+                description: "Fire god and lord of volcanoes, center of ceremonial life."
+            },
+            "Itzcuintli": {
+                deity: "Mictlantecuhtli",
+                description: "Lord of the underworld and guardian of ancestral bones."
+            },
+            "Ozomahtli": {
+                deity: "Xochipilli",
+                description: "Prince of flowers, god of art, games, and beauty."
+            },
+            "Malinalli": {
+                deity: "Patecatl",
+                description: "God of medicine and healing, discoverer of peyote."
+            },
+            "Acatl": {
+                deity: "Tezcatlipoca",
+                description: "Smoking Mirror, omnipotent god of destiny and night."
+            },
+            "Ocelotl": {
+                deity: "Tlazolteotl",
+                description: "Earth mother goddess, purifier of sin and disease."
+            },
+            "Cuauhtli": {
+                deity: "Xipe Totec",
+                description: "Flayed Lord, god of spring renewal and goldsmiths."
+            },
+            "Cozcacuauhtli": {
+                deity: "Itzpapalotl",
+                description: "Obsidian Butterfly, warrior goddess of sacrifice."
+            },
+            "Ollin": {
+                deity: "Xolotl",
+                description: "Twisted twin, guide of souls and lightning companion."
+            },
+            "Tecpatl": {
+                deity: "Chalchiuhtotolin",
+                description: "Jade turkey, god of plagues and mysterious forces."
+            },
+            "Quiahuitl": {
+                deity: "Tonatiuh",
+                description: "Sun god demanding blood sacrifice for cosmic motion."
+            },
+            "Xochitl": {
+                deity: "Xochiquetzal",
+                description: "Flower Feather, goddess of love, crafts, and sexuality."
+            }
+        };
+
+        function showDeityInfo(sign) {
+            const info = DEITIES[sign];
+            const deityDiv = document.getElementById('tonalpohualli');
+            deityDiv.innerHTML = `<b>${info.deity}</b><br>${info.description}`;
+            deityDiv.style.animation = 'pulse 1.5s ease-out';
+            setTimeout(() => deityDiv.style.animation = '', 1500);
+        }
+        function createDaySign(angle, sign, isCurrent) {
+            const rad = (angle - 90) * Math.PI / 180;
+            const x = 200 + Math.cos(rad) * 180;
+            const y = 200 + Math.sin(rad) * 180;
+            
+            return `
+                <g class="day-marker" transform="rotate(${angle},200,200)"
+                   onclick="showDeityInfo('${sign}')">
+                    <path d="M200,30 L205,45 195,45 Z" fill="${isCurrent ? '#ff4444' : '#c0a050'}" />
+                    <text x="200" y="60" text-anchor="middle" fill="${isCurrent ? '#ff4444' : '#c0a050'}" 
+                          font-size="12" transform="rotate(${-angle},200,60)">
+                        ${sign}
+                    </text>
+                </g>
+            `;
+        }
+
+        function updateCalendar() {
+            const now = new Date();
+            const diffDays = Math.floor((now - AZTEC_EPOCH) / 86400000);
+            
+            // Tonalpohualli (260-day cycle)
+            const tonalDay = diffDays % 260;
+            const currentSign = DAY_SIGNS[tonalDay % 20];
+            const tonalNumber = (tonalDay % 13) + 1;
+
+            // Xiuhpohualli (365-day cycle)
+            const xiuhDay = diffDays % 365;
+            const monthIndex = Math.floor(xiuhDay / 20);
+            const dayOfMonth = (xiuhDay % 20) + 1;
+
+            // Update day markers
+            const daySigns = document.getElementById('day-signs');
+            daySigns.innerHTML = DAY_SIGNS.map((sign, index) => {
+                const angle = (index * 18) + 9; // 20 signs × 18° spacing
+                return createDaySign(angle, sign, sign === currentSign);
+            }).join('');
+
+            // Update text displays
+            document.getElementById('tonalpohualli').innerHTML = `
+                Tonalpohualli: <b>${tonalNumber} ${currentSign}</b>
+            `;
+            document.getElementById('xiuhpohualli').innerHTML = `
+                Xiuhpohualli: <b>${dayOfMonth} ${getMonthName(xiuhDay)}</b>
+            `;
+            document.getElementById('gregorian').textContent = 
+                now.toLocaleDateString('en-US', { dateStyle: 'full' });
+        }
+
+        function getMonthName(xiuhDay) {
+            const months = [
+                "Atlcahualo", "Tlacaxipehualiztli", "Tozoztontli", "Huey Tozoztli",
+                "Toxcatl", "Etzalcualiztli", "Tecuilhuitontli", "Huey Tecuilhuitl",
+                "Miccailhuitontli", "Huey Miccailhuitl", "Ochpaniztli", "Pachtontli",
+                "Huey Pachtli", "Quecholli", "Panquetzaliztli", "Atemoztli",
+                "Tititl", "Izcalli", "Nemontemi"
+            ];
+            return xiuhDay < 360 ? months[Math.floor(xiuhDay / 20)] : months[18];
+        }
+
+        // Initialize and update every minute
+        updateCalendar();
+        setInterval(updateCalendar, 60000);
+    </script>
+</body>
+</html>
